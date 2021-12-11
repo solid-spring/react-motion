@@ -1,12 +1,12 @@
 /* eslint-disable class-methods-use-this */
 import React from 'react';
-import {spring} from '../src/react-motion';
+import { spring } from '../lib/react-motion';
 import createMockRaf from './createMockRaf';
 import TestUtils from 'react-dom/test-utils';
 
-const {createSpy} = global.jasmine;
+const { createSpy } = global.jasmine;
 
-const injector = require('inject-loader!../src/Motion');
+const injector = require('inject-loader!../lib/Motion');
 
 // temporarily putting the animation loop test here
 // TODO: put it in the correct file
@@ -27,8 +27,8 @@ describe('animation loop', () => {
     class App extends React.Component {
       render() {
         return (
-          <Motion defaultStyle={{a: 0}} style={{a: spring(10)}}>
-            {({a}) => {
+          <Motion defaultStyle={{ a: 0 }} style={{ a: spring(10) }}>
+            {({ a }) => {
               count.push(a);
               return null;
             }}
@@ -55,8 +55,8 @@ describe('animation loop', () => {
     class App extends React.Component {
       render() {
         return (
-          <Motion defaultStyle={{a: -10}} style={{a: spring(-100)}}>
-            {({a}) => {
+          <Motion defaultStyle={{ a: -10 }} style={{ a: spring(-100) }}>
+            {({ a }) => {
               count.push(a);
               return null;
             }}
@@ -82,8 +82,8 @@ describe('animation loop', () => {
     class App extends React.Component {
       render() {
         return (
-          <Motion defaultStyle={{a: 0}} style={{a: spring(10)}}>
-            {({a}) => {
+          <Motion defaultStyle={{ a: 0 }} style={{ a: spring(10) }}>
+            {({ a }) => {
               count.push(a);
               return null;
             }}
@@ -143,7 +143,7 @@ describe('Motion', () => {
     class App extends React.Component {
       render() {
         // shouldn't throw here
-        return <Motion style={{a: 0}}>{() => null}</Motion>;
+        return <Motion style={{ a: 0 }}>{() => null}</Motion>;
       }
     }
     TestUtils.renderIntoDocument(<App />);
@@ -161,12 +161,14 @@ describe('Motion', () => {
         };
       }
       componentWillMount() {
-        kill = () => this.setState({kill: true});
+        kill = () => this.setState({ kill: true });
       }
       render() {
-        return this.state.kill
-          ? null
-          : <Motion defaultStyle={{a: 0}} style={{a: spring(10)}}>{() => null}</Motion>;
+        return this.state.kill ? null : (
+          <Motion defaultStyle={{ a: 0 }} style={{ a: spring(10) }}>
+            {() => null}
+          </Motion>
+        );
       }
     }
     TestUtils.renderIntoDocument(<App />);
@@ -181,8 +183,8 @@ describe('Motion', () => {
     class App extends React.Component {
       render() {
         return (
-          <Motion defaultStyle={{a: 0}} style={{a: spring(10)}}>
-            {({a}) => {
+          <Motion defaultStyle={{ a: 0 }} style={{ a: spring(10) }}>
+            {({ a }) => {
               count.push(a);
               return null;
             }}
@@ -209,9 +211,12 @@ describe('Motion', () => {
       render() {
         return (
           <Motion
-              defaultStyle={{a: 0}}
-              style={{a: spring(10, {stiffness: 100, damping: 50, precision: 16})}}>
-            {({a}) => {
+            defaultStyle={{ a: 0 }}
+            style={{
+              a: spring(10, { stiffness: 100, damping: 50, precision: 16 }),
+            }}
+          >
+            {({ a }) => {
               count.push(a);
               return null;
             }}
@@ -241,9 +246,10 @@ describe('Motion', () => {
       render() {
         return (
           <Motion
-            defaultStyle={{a: 0, b: 10}}
-            style={{a: spring(10), b: spring(410)}}>
-            {({a, b}) => {
+            defaultStyle={{ a: 0, b: 10 }}
+            style={{ a: spring(10), b: spring(410) }}
+          >
+            {({ a, b }) => {
               count.push([a, b]);
               return null;
             }}
@@ -270,12 +276,15 @@ describe('Motion', () => {
     class App extends React.Component {
       render() {
         return (
-          <Motion defaultStyle={{owner: 0}} style={{owner: spring(10)}}>
-            {({owner}) => {
+          <Motion defaultStyle={{ owner: 0 }} style={{ owner: spring(10) }}>
+            {({ owner }) => {
               count.push(owner);
               return (
-                <Motion defaultStyle={{child: 10}} style={{child: spring(400)}}>
-                  {({child}) => {
+                <Motion
+                  defaultStyle={{ child: 10 }}
+                  style={{ child: spring(400) }}
+                >
+                  {({ child }) => {
                     count.push(child);
                     return null;
                   }}
@@ -320,8 +329,8 @@ describe('Motion', () => {
     class App extends React.Component {
       render() {
         return (
-          <Motion defaultStyle={{a: 0}} style={{a: spring(400)}}>
-            {({a}) => {
+          <Motion defaultStyle={{ a: 0 }} style={{ a: spring(400) }}>
+            {({ a }) => {
               count.push(a);
               return null;
             }}
@@ -360,8 +369,8 @@ describe('Motion', () => {
       }
       render() {
         return (
-          <Motion style={{a: this.state.p ? 400 : spring(0)}}>
-            {({a}) => {
+          <Motion style={{ a: this.state.p ? 400 : spring(0) }}>
+            {({ a }) => {
               count.push(a);
               return null;
             }}
@@ -372,19 +381,15 @@ describe('Motion', () => {
     TestUtils.renderIntoDocument(<App />);
 
     expect(count).toEqual([0]);
-    setState({p: true});
+    setState({ p: true });
     expect(count).toEqual([
       0,
       0, // this new 0 comes from owner update, causing Motion to re-render
     ]);
     mockRaf.step(10);
     // jumped to end, will only have two renders no matter how much we step
-    expect(count).toEqual([
-      0,
-      0,
-      400,
-    ]);
-    setState({p: false});
+    expect(count).toEqual([0, 0, 400]);
+    setState({ p: false });
     mockRaf.step(3);
     expect(count).toEqual([
       0,
@@ -405,16 +410,16 @@ describe('Motion', () => {
       render() {
         return (
           <Motion
-            defaultStyle={{a: 0}}
-            style={{a: spring(5, {stiffness: 380, damping: 18, precision: 1})}}
+            defaultStyle={{ a: 0 }}
+            style={{
+              a: spring(5, { stiffness: 380, damping: 18, precision: 1 }),
+            }}
             onRest={onRest}
           >
-            {
-              ({a}) => {
-                result = a;
-                return null;
-              }
-            }
+            {({ a }) => {
+              result = a;
+              return null;
+            }}
           </Motion>
         );
       }
@@ -428,7 +433,6 @@ describe('Motion', () => {
     expect(onRest.calls.count()).toEqual(1);
   });
 
-
   it('should not call onRest if an animation is still in progress', () => {
     const onRest = createSpy('onRest');
     let resultA = 0;
@@ -438,20 +442,18 @@ describe('Motion', () => {
       render() {
         return (
           <Motion
-            defaultStyle={{a: 0, b: 0}}
+            defaultStyle={{ a: 0, b: 0 }}
             style={{
-              a: spring(5, {stiffness: 380, damping: 18, precision: 1}),
-              b: spring(500, {stiffness: 380, damping: 18, precision: 1}),
+              a: spring(5, { stiffness: 380, damping: 18, precision: 1 }),
+              b: spring(500, { stiffness: 380, damping: 18, precision: 1 }),
             }}
             onRest={onRest}
           >
-            {
-              ({a, b}) => {
-                resultA = a;
-                resultB = b;
-                return null;
-              }
-            }
+            {({ a, b }) => {
+              resultA = a;
+              resultB = b;
+              return null;
+            }}
           </Motion>
         );
       }
@@ -465,7 +467,6 @@ describe('Motion', () => {
     expect(resultB).not.toEqual(500);
     expect(onRest).not.toHaveBeenCalled();
   });
-
 
   it('should not call onRest unless an animation occurred', () => {
     const onRest = createSpy('onRest');
@@ -486,8 +487,8 @@ describe('Motion', () => {
       render() {
         return (
           <Motion
-            defaultStyle={{a: 0}}
-            style={{a: this.state.a}}
+            defaultStyle={{ a: 0 }}
+            style={{ a: this.state.a }}
             onRest={onRest}
           >
             {() => null}
@@ -498,7 +499,7 @@ describe('Motion', () => {
 
     TestUtils.renderIntoDocument(<App />);
     mockRaf.step();
-    setState({a: 50});
+    setState({ a: 50 });
     mockRaf.step();
 
     expect(onRest).not.toHaveBeenCalled();
@@ -531,25 +532,25 @@ describe('Motion', () => {
     }
     TestUtils.renderIntoDocument(<App />);
 
-    expect(count).toEqual([{a: 0}]);
-    setState({a: 400});
-    setState({a: spring(100)});
+    expect(count).toEqual([{ a: 0 }]);
+    setState({ a: 400 });
+    setState({ a: spring(100) });
     mockRaf.step(2);
-    setState({a: spring(400)});
+    setState({ a: spring(400) });
     mockRaf.step(2);
     expect(count).toEqual([
-      {a: 0},
-      {a: 0}, // this new 0 comes from owner update, causing Motion to re-render
-      {a: 400},
-      {a: 385.8333333333333},
-      {a: 364.3078703703703},
-      {a: 364.3078703703703},
-      {a: 353.79556970164606},
-      {a: 350.02047519790233},
+      { a: 0 },
+      { a: 0 }, // this new 0 comes from owner update, causing Motion to re-render
+      { a: 400 },
+      { a: 385.8333333333333 },
+      { a: 364.3078703703703 },
+      { a: 364.3078703703703 },
+      { a: 353.79556970164606 },
+      { a: 350.02047519790233 },
     ]);
     mockRaf.step(999);
     expect(count.length).toBe(85);
-    setState({a: spring(400)});
+    setState({ a: spring(400) });
     // make sure we're still updating children even if there's nothing to interp
     expect(count.length).toBe(86);
   });

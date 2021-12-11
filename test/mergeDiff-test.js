@@ -1,4 +1,4 @@
-import mergeDiff from '../src/mergeDiff';
+import mergeDiff from '../lib/mergeDiff';
 
 const id = (_, s) => s;
 const n = () => null;
@@ -13,21 +13,25 @@ function test(prevRaw, nextRaw, expectedRaw, customOnRemove) {
   prevRaw.forEach(num => {
     const styleVal = Math.random();
     // key needs to be a string; cast it
-    prev.push({key: String(num), style: {a: styleVal}});
+    prev.push({ key: String(num), style: { a: styleVal } });
     prevKeyStyleValMap[num] = styleVal;
   });
   let next = [];
   let nextKeyStyleValMap = {};
   nextRaw.forEach(num => {
     const styleVal = Math.random();
-    next.push({key: String(num), style: {a: styleVal}});
+    next.push({ key: String(num), style: { a: styleVal } });
     nextKeyStyleValMap[num] = styleVal;
   });
 
   const expected = expectedRaw.map(num => {
     return {
       key: String(num),
-      style: {a: Object.prototype.hasOwnProperty.call(nextKeyStyleValMap, num) ? nextKeyStyleValMap[num] : prevKeyStyleValMap[num]},
+      style: {
+        a: Object.prototype.hasOwnProperty.call(nextKeyStyleValMap, num)
+          ? nextKeyStyleValMap[num]
+          : prevKeyStyleValMap[num],
+      },
     };
   });
 
@@ -68,8 +72,13 @@ describe('mergeDiff', () => {
   });
 
   it('should work with some more typical onRemove callbacks', () => {
-    test([1, 2, 3], [1, 9], [1, 2, 9], (index, s) => index === 1 ? s : null);
-    test([1, 2, 3, 4], [5, 4, 2], [1, 5, 4, 2], (index, s) => index === 0 ? s : null);
+    test([1, 2, 3], [1, 9], [1, 2, 9], (index, s) => (index === 1 ? s : null));
+    test(
+      [1, 2, 3, 4],
+      [5, 4, 2],
+      [1, 5, 4, 2],
+      (index, s) => (index === 0 ? s : null),
+    );
   });
 
   it('should not call cb more than once per disappearing key', () => {

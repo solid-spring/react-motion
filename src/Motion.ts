@@ -1,4 +1,3 @@
-/* @flow */
 import mapToZero from './mapToZero';
 import stripStyle from './stripStyle';
 import stepper from './stepper';
@@ -7,24 +6,15 @@ import defaultRaf from 'raf';
 import shouldStopAnimation from './shouldStopAnimation';
 import React from 'react';
 import PropTypes from 'prop-types';
-
-import type {
-  ReactElement,
-  PlainStyle,
-  Style,
-  Velocity,
-  MotionProps,
-} from './Types';
+import { PlainStyle, Style, Velocity, MotionProps } from './Types';
 
 const msPerFrame = 1000 / 60;
-
 type MotionState = {
-  currentStyle: PlainStyle,
-  currentVelocity: Velocity,
-  lastIdealStyle: PlainStyle,
-  lastIdealVelocity: Velocity,
+  currentStyle: PlainStyle;
+  currentVelocity: Velocity;
+  lastIdealStyle: PlainStyle;
+  lastIdealVelocity: Velocity;
 };
-
 export default class Motion extends React.Component<MotionProps, MotionState> {
   static propTypes = {
     // TOOD: warn against putting a config in here
@@ -43,7 +33,7 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
 
   unmounting: boolean = false;
   wasAnimating: boolean = false;
-  animationID: ?number = null;
+  animationID: number | null | undefined = null;
   prevTime: number = 0;
   accumulatedTime: number = 0;
 
@@ -64,7 +54,7 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
   // at 0 (didn't have time to tick and interpolate even once). If we naively
   // compare currentStyle with destVal it'll be 0 === 0 (no animation, stop).
   // In reality currentStyle should be 400
-  unreadPropStyle: ?Style = null;
+  unreadPropStyle: Style | null | undefined = null;
   // after checking for unreadPropStyle != null, we manually go set the
   // non-interpolating values (those that are a number, without a spring
   // config)
@@ -83,13 +73,22 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
       }
 
       const styleValue = destStyle[key];
+
       if (typeof styleValue === 'number') {
         if (!dirty) {
           dirty = true;
-          currentStyle = { ...currentStyle };
-          currentVelocity = { ...currentVelocity };
-          lastIdealStyle = { ...lastIdealStyle };
-          lastIdealVelocity = { ...lastIdealVelocity };
+          currentStyle = {
+            ...currentStyle,
+          };
+          currentVelocity = {
+            ...currentVelocity,
+          };
+          lastIdealStyle = {
+            ...lastIdealStyle,
+          };
+          lastIdealVelocity = {
+            ...lastIdealVelocity,
+          };
         }
 
         currentStyle[key] = styleValue;
@@ -108,7 +107,6 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
       });
     }
   };
-
   startAnimationIfNecessary = (): void => {
     if (this.unmounting || this.animationID != null) {
       return;
@@ -128,6 +126,7 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
 
       // check if we need to animate in the first place
       const propsStyle: Style = this.props.style;
+
       if (
         shouldStopAnimation(
           this.state.currentStyle,
@@ -147,11 +146,11 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
       }
 
       this.wasAnimating = true;
-
       const currentTime = timestamp || defaultNow();
       const timeDelta = currentTime - this.prevTime;
       this.prevTime = currentTime;
       this.accumulatedTime = this.accumulatedTime + timeDelta;
+
       // more than 10 frames? prolly switched browser tab. Restart
       if (this.accumulatedTime > msPerFrame * 10) {
         this.accumulatedTime = 0;
@@ -169,7 +168,6 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
           Math.floor(this.accumulatedTime / msPerFrame) * msPerFrame) /
         msPerFrame;
       const framesToCatchUp = Math.floor(this.accumulatedTime / msPerFrame);
-
       let newLastIdealStyle: PlainStyle = {};
       let newLastIdealVelocity: Velocity = {};
       let newCurrentStyle: PlainStyle = {};
@@ -181,6 +179,7 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
         }
 
         const styleValue = propsStyle[key];
+
         if (typeof styleValue === 'number') {
           newCurrentStyle[key] = styleValue;
           newCurrentVelocity[key] = 0;
@@ -189,6 +188,7 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
         } else {
           let newLastIdealStyleValue = this.state.lastIdealStyle[key];
           let newLastIdealVelocityValue = this.state.lastIdealVelocity[key];
+
           for (let i = 0; i < framesToCatchUp; i++) {
             [newLastIdealStyleValue, newLastIdealVelocityValue] = stepper(
               msPerFrame / 1000,
@@ -200,6 +200,7 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
               styleValue.precision,
             );
           }
+
           const [nextIdealX, nextIdealV] = stepper(
             msPerFrame / 1000,
             newLastIdealStyleValue,
@@ -209,7 +210,6 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
             styleValue.damping,
             styleValue.precision,
           );
-
           newCurrentStyle[key] =
             newLastIdealStyleValue +
             (nextIdealX - newLastIdealStyleValue) * currentFrameCompletion;
@@ -224,16 +224,13 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
       this.animationID = null;
       // the amount we're looped over above
       this.accumulatedTime -= framesToCatchUp * msPerFrame;
-
       this.setState({
         currentStyle: newCurrentStyle,
         currentVelocity: newCurrentVelocity,
         lastIdealStyle: newLastIdealStyle,
         lastIdealVelocity: newLastIdealVelocity,
       });
-
       this.unreadPropStyle = null;
-
       this.startAnimationIfNecessary();
     });
   };
@@ -250,6 +247,7 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
     }
 
     this.unreadPropStyle = props.style;
+
     if (this.animationID == null) {
       this.prevTime = defaultNow();
       this.startAnimationIfNecessary();
@@ -258,13 +256,14 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
 
   componentWillUnmount() {
     this.unmounting = true;
+
     if (this.animationID != null) {
       defaultRaf.cancel(this.animationID);
       this.animationID = null;
     }
   }
 
-  render(): ReactElement {
+  render() {
     const renderedChildren = this.props.children(this.state.currentStyle);
     return renderedChildren && React.Children.only(renderedChildren);
   }

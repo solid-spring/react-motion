@@ -74,7 +74,7 @@
     "flow_check": "flow check",
     "prepublishOnly": "npm run build",
     "test": "cross-env NODE_ENV=test karma start ./karma.conf.js --single-run",
-    "test:travis": "cross-env NODE_ENV=test karma start ./karma.conf.js --single-run",
+    "test:travis": "cross-env NODE_ENV=test karma start ./karma.conf.js --browsers=Chrome --single-run=false",
     "test:dev": "cross-env NODE_ENV=test karma start ./karma.conf.js --no-single-run --auto-watch",
     "test:cov": "cross-env NODE_ENV=test karma start ./karma.conf.js --single-run --reporters coverage",
     "gh-pages": "git fetch origin && git checkout gh-pages && git reset --hard origin/gh-pages && git rebase origin/master --force-rebase && npm run build-demos && git add . && git commit --amend --no-edit && git push origin gh-pages --force && git checkout master",
@@ -112,9 +112,15 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@babel/preset-typescript": "^7.16.0",
     "@babel/runtime": "7.7.2",
+    "@types/node": "^16",
+    "@types/prop-types": "^15.7.4",
+    "@types/raf": "^3.4.0",
+    "@types/react": "^17.0.37",
     "performance-now": "^2.1.0",
     "prop-types": "^15.5.8",
-    "raf": "^3.1.0"
+    "raf": "^3.1.0",
+    "typescript": "^4.5.3"
   }
 }

@@ -1,38 +1,36 @@
-/* @flow */
-import type { TransitionStyle } from './Types';
-
-// core keys merging algorithm. If previous render's keys are [a, b], and the
+import { TransitionStyle } from './Types'; // core keys merging algorithm. If previous render's keys are [a, b], and the
 // next render's [c, b, d], what's the final merged keys and ordering?
-
 // - c and a must both be before b
 // - b before d
 // - ordering between a and c ambiguous
-
 // this reduces to merging two partially ordered lists (e.g. lists where not
 // every item has a definite ordering, like comparing a and c above). For the
 // ambiguous ordering we deterministically choose to place the next render's
 // item after the previous'; so c after a
-
 // this is called a topological sorting. Except the existing algorithms don't
 // work well with js bc of the amount of allocation, and isn't optimized for our
 // current use-case bc the runtime is linear in terms of edges (see wiki for
 // meaning), which is huge when two lists have many common elements
+
 export default function mergeDiff(
   prev: Array<TransitionStyle>,
   next: Array<TransitionStyle>,
   onRemove: (
     prevIndex: number,
     prevStyleCell: TransitionStyle,
-  ) => ?TransitionStyle,
+  ) => TransitionStyle | null | undefined,
 ): Array<TransitionStyle> {
   // bookkeeping for easier access of a key's index below. This is 2 allocations +
   // potentially triggering chrome hash map mode for objs (so it might be faster
   // to loop through and find a key's index each time), but I no longer care
-  let prevKeyIndex: { [key: string]: number } = {};
+  let prevKeyIndex: Record<string, number> = {};
+
   for (let i = 0; i < prev.length; i++) {
     prevKeyIndex[prev[i].key] = i;
   }
-  let nextKeyIndex: { [key: string]: number } = {};
+
+  let nextKeyIndex: Record<string, number> = {};
+
   for (let i = 0; i < next.length; i++) {
     nextKeyIndex[next[i].key] = i;
   }
@@ -41,14 +39,17 @@ export default function mergeDiff(
   // duplicates (in terms of keys). If there's dupe, keep the item in next).
   // This way of writing it saves allocations
   let ret = [];
+
   for (let i = 0; i < next.length; i++) {
     ret[i] = next[i];
   }
+
   for (let i = 0; i < prev.length; i++) {
     if (!Object.prototype.hasOwnProperty.call(nextKeyIndex, prev[i].key)) {
       // this is called my TM's `mergeAndSync`, which calls willLeave. We don't
       // merge in keys that the user desires to kill
       const fill = onRemove(i, prev[i]);
+
       if (fill != null) {
         ret.push(fill);
       }
@@ -70,13 +71,13 @@ export default function mergeDiff(
       return prevKeyIndex[a.key] - prevKeyIndex[b.key];
     } else if (nextOrderA != null) {
       // key a in next, key b in prev
-
       // how to determine the order between a and b? We find a "pivot" (term
       // abuse), a key present in both prev and next, that is sandwiched between
       // a and b. In the context of our above example, if we're comparing a and
       // d, b's (the only) pivot
       for (let i = 0; i < next.length; i++) {
         const pivot = next[i].key;
+
         if (!Object.prototype.hasOwnProperty.call(prevKeyIndex, pivot)) {
           continue;
         }
@@ -93,15 +94,19 @@ export default function mergeDiff(
           return 1;
         }
       }
+
       // pluggable. default to: next bigger than prev
       return 1;
     }
+
     // prevOrderA, nextOrderB
     for (let i = 0; i < next.length; i++) {
       const pivot = next[i].key;
+
       if (!Object.prototype.hasOwnProperty.call(prevKeyIndex, pivot)) {
         continue;
       }
+
       if (
         nextOrderB < nextKeyIndex[pivot] &&
         prevOrderA > prevKeyIndex[pivot]
@@ -114,6 +119,7 @@ export default function mergeDiff(
         return -1;
       }
     }
+
     // pluggable. default to: next bigger than prev
     return -1;
   });
